@@ -18,6 +18,7 @@ class SSHConnection
     private $username;
     private $password;
     private $privateKeyPath;
+    private $passphrase;
     private $connected = false;
     private $ssh;
 
@@ -42,6 +43,12 @@ class SSHConnection
     public function withPassword(string $password): self
     {
         $this->password = $password;
+        return $this;
+    }
+    
+    public function withPassphrase(string $passphrase): self
+    {
+        $this->passphrase = $passphrase;
         return $this;
     }
 
@@ -78,7 +85,11 @@ class SSHConnection
 
         if ($this->privateKeyPath) {
             $key = new RSA();
+            if ($this->passphrase) {
+                $key->setPassword($this->passphrase);
+            }
             $key->loadKey(file_get_contents($this->privateKeyPath));
+            
             $authenticated = $this->ssh->login($this->username, $key);
             if (!$authenticated) {
                 throw new RuntimeException('Error authenticating with public-private key pair.');
